@@ -1,13 +1,19 @@
 {
   "name": "GitHub Breakout",
   "version": "1.1.1",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "description": "Breakout!",
-  "permissions": ["storage"],
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
-      "js": ["main.js"]
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "main.js"
+      ]
     }
   ],
   "icons": {
