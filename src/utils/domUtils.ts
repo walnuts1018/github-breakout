@@ -39,17 +39,6 @@ export function createDivElement(text: string) {
 }
 
 /**
- * create span element
- * @param text textContent
- */
-
-export function createH2Element(text: string) {
-  const el = document.createElement('h2')
-  el.textContent = text
-  return el
-}
-
-/**
  * create svg element
  */
 

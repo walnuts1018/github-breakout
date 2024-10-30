@@ -49,7 +49,7 @@ export class Breakout extends Game {
     this.ball = new Ball(this.svgElement)
     this.player = new Player(this.svgElement)
     this.blocks = [...this.tableElement.querySelectorAll('td')]
-      .filter((e) => e.getAttribute('data-count') !== '0') //data-count=contributions, data-level=color level
+      .filter((e) => e.getAttribute('data-count') !== '0')
       .map((e) => new Block(this.tableElement, e))
   }
 
