@@ -37,3 +37,28 @@ export function createDivElement(text: string) {
   el.textContent = text
   return el
 }
+
+/**
+ * create span element
+ * @param text textContent
+ */
+
+export function createH2Element(text: string) {
+  const el = document.createElement('h2')
+  el.textContent = text
+  return el
+}
+
+/**
+ * create svg element
+ */
+
+export function createSVGElement() {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  el.style.position = 'absolute'
+  el.style.top = '0'
+  el.style.left = '0'
+  el.style.width = '100%'
+  el.style.height = '100%'
+  return el
+}

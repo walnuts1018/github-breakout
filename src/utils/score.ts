@@ -3,11 +3,10 @@
  * @param score
  */
 export async function saveScore(score: number) {
-  if ((await getHighScore()) > score) return Promise.resolve()
+  if ((await getHighScore()) > score)
+    return Promise.resolve()
   else
-    return new Promise((resolve) =>
-      chrome.storage.sync.set({ [`score:${location.href}`]: score }, resolve)
-    )
+    await chrome.storage.sync.set({ [`score:${location.href}`]: score })
 }
 
 /**

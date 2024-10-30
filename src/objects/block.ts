@@ -2,49 +2,44 @@ import { GameObject } from './gameObject'
 import { Rect } from './shape'
 
 export class Block implements GameObject, Rect {
-  blockElement: SVGElement
+  blockElement: HTMLTableCellElement
 
   left: number
   right: number
   top: number
   bottom: number
 
-  origianlLife: number
-  originalColorLevel: string
-
   life: number
+  originalColorLevel: number
 
-  constructor(svgElement: SVGElement, el: SVGElement) {
+  constructor(parent: HTMLTableElement, el: HTMLTableCellElement) {
     this.blockElement = el
 
     // calculating coordinates in SVG
     const r = el.getBoundingClientRect()
-    const rr = svgElement.getBoundingClientRect()
+    const rr = parent.getBoundingClientRect()
     this.right = r.right - rr.left
     this.left = r.left - rr.left
     this.top = r.top - rr.top
     this.bottom = r.bottom - rr.top
 
-    this.origianlLife = Number(el.getAttribute('data-count'))
-    this.life = this.origianlLife
-    this.originalColorLevel = el.getAttribute('data-level') || '0'
+    this.originalColorLevel = Number(el.getAttribute('data-level'))
+    this.life = this.originalColorLevel
   }
 
-  update(delta: number) {}
+  update(delta: number) { }
 
   /**
    * called when hit the ball
    */
   onCollide() {
-    this.life = 0 // breaks at once
+    this.life -= 1
     this.blockElement.setAttribute('fill', 'var(--color-calendar-graph-day-bg)')
-    this.blockElement.setAttribute('data-count', '0')
-    this.blockElement.setAttribute('data-level', '0')
+    this.blockElement.setAttribute('data-level', this.life.toString())
   }
 
   reset() {
-    this.life = this.origianlLife
-    this.blockElement.setAttribute('data-level', this.originalColorLevel)
-    this.blockElement.setAttribute('data-count', this.origianlLife.toString())
+    this.life = this.originalColorLevel
+    this.blockElement.setAttribute('data-level', this.originalColorLevel.toString())
   }
 }

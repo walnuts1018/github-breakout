@@ -3,7 +3,7 @@ import { Block } from '../objects/block'
 import { Game } from './game'
 import { Direction, intersectDirection } from '../utils/intersect'
 import { Player } from '../objects/player'
-import { createButton, createDivElement, createShape } from '../utils/domUtils'
+import { createButton, createDivElement, createSVGElement } from '../utils/domUtils'
 import { getHighScore, saveScore } from '../utils/score'
 
 enum State {
@@ -20,16 +20,18 @@ export class Breakout extends Game {
   blocks!: Block[]
   player!: Player
 
-  svgElement: SVGElement
-  headerElement!: HTMLElement | null
+  parentElement!: HTMLDivElement
+  tableElement!: HTMLTableElement
+  svgElement!: SVGElement
+  headerElement!: HTMLElement
+  originalHeaderContent!: string
   button!: HTMLButtonElement
   footerElement!: HTMLDivElement
-  scoreElement!: SVGElement
 
-  constructor(svgElement: SVGElement) {
+  constructor(parent: HTMLDivElement) {
     super()
-    this.svgElement = svgElement
-    ;(async () => {
+    this.parentElement = parent;
+    (async () => {
       this.initGameObject()
       await this.initUI()
       this.startGameLoop()
@@ -37,41 +39,44 @@ export class Breakout extends Game {
   }
 
   initGameObject() {
+    this.tableElement = this.parentElement.querySelectorAll('.js-calendar-graph-table')[0] as HTMLTableElement
+
+    this.parentElement.style.position = 'relative'
+    this.svgElement = this.parentElement.appendChild(
+      createSVGElement()
+    ) as SVGElement
+
     this.ball = new Ball(this.svgElement)
     this.player = new Player(this.svgElement)
-    this.blocks = [...this.svgElement.querySelectorAll('rect')]
-      .filter((e) => e.getAttribute('data-count') !== '0')
-      .map((e) => new Block(this.svgElement, e))
+    this.blocks = [...this.tableElement.querySelectorAll('td')]
+      .filter((e) => e.getAttribute('data-count') !== '0') //data-count=contributions, data-level=color level
+      .map((e) => new Block(this.tableElement, e))
   }
 
   async initUI() {
-    this.scoreElement = this.svgElement.appendChild(
-      createShape(
-        'text',
-        { x: 20, y: 130, fill: 'var(--color-text-primary)' },
-        ''
-      )
-    )
-
     this.headerElement = document.querySelector<HTMLElement>(
       '.js-yearly-contributions h2'
-    )
+    ) as HTMLElement
+    this.originalHeaderContent = this.headerElement.textContent || ''
 
-    const uiContainer = document.querySelector('.js-calendar-graph')
+    const uiContainer = this.parentElement.parentElement
     if (!uiContainer) return
 
-    this.button = uiContainer.appendChild(
-      createButton(this.blocks.length > 0 ? `Play!` : '🥺', () =>
-        this.onButtonClick()
-      )
-    )
-
     const hs = await getHighScore()
-    this.footerElement = uiContainer.appendChild(
+    this.footerElement = uiContainer.insertBefore(
       createDivElement(
         hs > 0 ? `HighScore: ${hs}` : 'Press the arrow keys to play ←→'
-      )
+      ),
+      uiContainer.childNodes[3]
     )
+
+    this.button = uiContainer.insertBefore(
+      createButton(this.blocks.length > 0 ? `Play!` : '🥺', () =>
+        this.onButtonClick()
+      ),
+      this.footerElement
+    )
+
   }
 
   /**
@@ -87,7 +92,7 @@ export class Breakout extends Game {
     this.blocks.forEach((b) => b.update(delta))
 
     // TODO reduce the computational cost
-    let remainingContributions = 0
+    let remainingScore = 0
     let collideFlagX = false
     let collideFlagY = false
     this.blocks
@@ -97,11 +102,11 @@ export class Breakout extends Game {
         // the ball hit the block
         if (d !== Direction.None) {
           b.onCollide()
-          this.score += b.origianlLife
+          this.score += 1
           collideFlagX ||= d == Direction.X || d == Direction.XY
           collideFlagY ||= d == Direction.Y || d == Direction.XY
         }
-        remainingContributions += b.life
+        remainingScore += b.life
       })
 
     if (collideFlagX && collideFlagY) this.ball.onCollide(Direction.XY)
@@ -112,7 +117,7 @@ export class Breakout extends Game {
     this.ball.onCollide(intersectDirection(this.ball, this.player))
 
     // update score label
-    this.updateLabel(remainingContributions)
+    this.headerElement.textContent = `score: ${this.score}`
 
     // gameover
     if (this.ball.y > 220) {
@@ -122,25 +127,11 @@ export class Breakout extends Game {
     }
 
     // clear
-    if (remainingContributions === 0) {
+    if (remainingScore === 0) {
       this.state = State.Done
       this.button.textContent = 'Clear!'
       saveScore(this.score)
     }
-  }
-
-  /**
-   * update score and contribution label
-   * @param contributons remaining contributions
-   */
-  updateLabel(contributons: number) {
-    const tmp = this.headerElement?.textContent?.match(/.*?[0-9,]+([\s\S]*)/m)
-    if (this.headerElement && tmp)
-      this.headerElement.textContent = `${contributons.toLocaleString()}${tmp[1].replace(
-        /\n/,
-        ''
-      )}`
-    this.scoreElement.textContent = `score: ${this.score}`
   }
 
   /**
@@ -175,14 +166,13 @@ export class Breakout extends Game {
     let life = 0
     this.blocks.forEach((b) => {
       b.reset()
-      life += b.origianlLife
+      life += b.originalColorLevel
     })
     this.player.reset()
     this.ball.reset()
     this.score = 0
     this.button.textContent = 'Play!'
-    this.scoreElement.textContent = ''
+    this.headerElement.textContent = this.originalHeaderContent
     this.footerElement.textContent = `HighScore: ${await getHighScore()}`
-    this.updateLabel(life)
   }
 }
